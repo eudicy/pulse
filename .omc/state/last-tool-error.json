@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"pnpm test 2>&1\",\"timeout\":60000,\"description\":\"Run test suite\"}",
+  "error": "Exit code 1\n\n> pm-app@0.1.0 test /home/galadriel/Documents/Cline/insane-idea\n> vitest run\n\n\n RUN  v4.1.4 /home/galadriel/Documents/Cline/insane-idea\n\nNo test files found, exiting with code 1\n\ninclude: tests/unit/**/*.test.ts, tests/integration/**/*.test.ts\nexclude:  **/node_modules/**, **/.git/**\n\n ELIFECYCLE  Test failed. See above for more details.",
+  "timestamp": "2026-04-17T18:03:07.549Z",
+  "retry_count": 1
+}

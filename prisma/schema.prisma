@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+
+  users              User[]
+  projects           Project[]
+  invites            Invite[]
+  weeklyUpdates      WeeklyUpdate[]
+  stakeholderReports StakeholderReport[]
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  hashedPassword String?
+  role           Role      @default(MEMBER)
+  teamId         String
+  team           Team      @relation(fields: [teamId], references: [id])
+  createdAt      DateTime  @default(now())
+
+  assignedTasks      Task[]              @relation("Assignee")
+  accounts           Account[]
+  stakeholderReports StakeholderReport[] @relation("GeneratedBy")
+
+  @@index([teamId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Invite {
+  id         String    @id @default(cuid())
+  teamId     String
+  team       Team      @relation(fields: [teamId], references: [id])
+  email      String
+  token      String    @unique
+  role       Role      @default(MEMBER)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([teamId, email])
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  teamId      String
+  team        Team          @relation(fields: [teamId], references: [id])
+  name        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  deadline    DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tasks              Task[]
+  stakeholderReports StakeholderReport[]
+
+  @@index([teamId])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+
+model Task {
+  id            String     @id @default(cuid())
+  teamId        String
+  projectId     String
+  project       Project    @relation(fields: [projectId], references: [id])
+  title         String
+  description   String?
+  assigneeId    String?
+  assignee      User?      @relation("Assignee", fields: [assigneeId], references: [id])
+  dueDate       DateTime?
+  status        TaskStatus @default(TODO)
+  blockedReason String?
+  completedAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  statusEvents TaskStatusEvent[]
+
+  @@index([teamId, status])
+  @@index([projectId])
+  @@index([assigneeId])
+}
+
+model TaskStatusEvent {
+  id              String     @id @default(cuid())
+  taskId          String
+  task            Task       @relation(fields: [taskId], references: [id])
+  teamId          String
+  fromStatus      TaskStatus?
+  toStatus        TaskStatus
+  changedByUserId String?
+  changedAt       DateTime   @default(now())
+
+  @@index([teamId, changedAt])
+  @@index([taskId])
+}
+
+model WeeklyUpdate {
+  id          String   @id @default(cuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id])
+  periodStart DateTime
+  periodEnd   DateTime
+  generatedAt DateTime @default(now())
+  contentVersion Int   @default(1)
+  content     Json
+
+  @@unique([teamId, periodStart])
+  @@index([teamId, generatedAt])
+}
+
+enum ReportFormat {
+  HTML
+  MARKDOWN
+  PDF
+}
+
+enum ReportScope {
+  TEAM
+  PROJECT
+}
+
+model StakeholderReport {
+  id                   String       @id @default(cuid())
+  teamId               String
+  team                 Team         @relation(fields: [teamId], references: [id])
+  projectId            String?
+  project              Project?     @relation(fields: [projectId], references: [id])
+  scope                ReportScope
+  periodStart          DateTime
+  periodEnd            DateTime
+  format               ReportFormat @default(HTML)
+  contentVersion       Int          @default(1)
+  content              Json
+  shareToken           String?      @unique
+  shareTokenExpiresAt  DateTime?
+  shareTokenRevokedAt  DateTime?
+  generatedAt          DateTime     @default(now())
+  generatedByUserId    String?
+  generatedByUser      User?        @relation("GeneratedBy", fields: [generatedByUserId], references: [id])
+
+  @@unique([teamId, projectId, periodStart])
+  @@index([teamId, generatedAt])
+}
+
+model LlmUsage {
+  id         String   @id @default(cuid())
+  teamId     String
+  yearMonth  String   // "YYYY-MM"
+  tokensUsed Int      @default(0)
+  centsUsed  Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([teamId, yearMonth])
+}

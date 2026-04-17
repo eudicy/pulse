@@ -1,0 +1,28 @@
+# Ralph Progress Log — Startup PM Tool
+
+## Session started: 2026-04-17
+
+## Completed so far (pre-ralph scaffolding):
+- Next.js 15 app scaffolded (node v22, Next.js 16.2.4, React 19)
+- All production deps installed: prisma@5, next-auth@5.0.0-beta.25, @auth/prisma-adapter, luxon, zod, react-hook-form, @upstash/ratelimit, @anthropic-ai/sdk, resend, etc.
+- Dev deps: vitest@4, @playwright/test, @vitejs/plugin-react, @types/luxon
+- prisma/schema.prisma — full schema with all models including LlmUsage, shareTokenExpiresAt, contentVersion
+- src/lib/db-raw.ts — Prisma singleton
+- src/lib/db.ts — createScopedDb with $extends (read+write coverage), status-event middleware
+- src/lib/time.ts — weeklyPeriod() with luxon
+- docker-compose.yml — postgres16, mailpit, redis
+- .env.example — all env vars
+- vercel.json — Monday 09:00 UTC cron
+- vitest.config.ts + playwright.config.ts + tests/unit/setup.ts
+- Prisma client generated successfully
+
+## Patterns observed:
+- Project uses pnpm 10.33.0 on Node 22
+- Next.js 16 (latest) + React 19 — both newer than plan specified (16.2.4 instead of 15)
+- Working directory: /home/galadriel/Documents/Cline/insane-idea
+- No Docker running yet — will need docker-compose up for DB-dependent tests
+- Prisma generate works without DB connection
+
+## Learnings:
+- create-next-app fails when .omc/ dir exists — workaround: create in /tmp then copy
+- pnpm was not pre-installed, installed globally via npm

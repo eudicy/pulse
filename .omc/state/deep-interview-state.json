@@ -1,0 +1,18 @@
+{
+  "active": false,
+  "current_phase": "complete",
+  "plan_path": ".omc/plans/startup-pm-auto-reports.md",
+  "interview_id": "di-001",
+  "final_ambiguity": 0.143,
+  "rounds_completed": 8,
+  "spec_path": ".omc/specs/deep-interview-startup-pm-auto-reports.md",
+  "consensus_plan_path": ".omc/plans/startup-pm-auto-reports.md",
+  "status": "APPROVED",
+  "ralplan_iterations": 2,
+  "_meta": {
+    "mode": "deep-interview",
+    "sessionId": null,
+    "updatedAt": "2026-04-17T17:57:51.963Z",
+    "updatedBy": "state_write_tool"
+  }
+}

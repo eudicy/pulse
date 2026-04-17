@@ -1,0 +1,116 @@
+{
+  "project": "Startup PM Tool with Auto-Generated Reports",
+  "version": "1.0.0",
+  "specPath": ".omc/specs/deep-interview-startup-pm-auto-reports.md",
+  "planPath": ".omc/plans/startup-pm-auto-reports.md",
+  "stories": [
+    {
+      "id": "US-000",
+      "title": "Phase 0 Scaffolding — project boots and tests run",
+      "priority": 1,
+      "passes": true,
+      "acceptanceCriteria": [
+        "package.json contains prisma, next-auth@5.0.0-beta.25, @auth/prisma-adapter, react-hook-form, zod, luxon, @upstash/ratelimit, @anthropic-ai/sdk",
+        "prisma/schema.prisma exists with Team, User, Account, VerificationToken, Invite, Project, Task, TaskStatusEvent, WeeklyUpdate, StakeholderReport, LlmUsage models",
+        "src/lib/db-raw.ts exports dbRaw PrismaClient singleton",
+        "src/lib/db.ts exports createScopedDb(teamId) using Prisma $extends (not Proxy)",
+        "src/lib/time.ts exports weeklyPeriod(team, now) using luxon",
+        "docker-compose.yml exists with postgres, mailpit, redis services",
+        ".env.example exists with DATABASE_URL, NEXTAUTH_SECRET, ANTHROPIC_API_KEY, CRON_SECRET, UPSTASH_REDIS_REST_URL",
+        "vercel.json exists with Monday 09:00 UTC cron for /api/cron/weekly-updates",
+        "vitest.config.ts exists",
+        "pnpm test exits 0 (empty suite is fine)",
+        "pnpm build exits 0"
+      ]
+    },
+    {
+      "id": "US-001",
+      "title": "Phase 1 — Auth: NextAuth v5 JWT sessions with signup + login",
+      "priority": 2,
+      "passes": false,
+      "acceptanceCriteria": [
+        "src/lib/auth.ts exists with session: { strategy: 'jwt' } and PrismaAdapter for User/Account/VerificationToken only (no Session model)",
+        "src/lib/auth.ts jwt callback stamps token.teamId and token.role from user record",
+        "src/lib/auth.ts session callback exposes session.user.teamId and session.user.role",
+        "src/lib/auth-session.ts exports requireSession() that reads from auth() and returns { userId, teamId, role } or redirects to /login",
+        "app/api/auth/[...nextauth]/route.ts exists and exports GET, POST from NextAuth handlers",
+        "app/(auth)/login/page.tsx exists with email+password form and magic-link option",
+        "app/(auth)/signup/page.tsx exists and on submit creates Team (slug derived from name) + User(role=ADMIN) + sends magic link",
+        "middleware.ts gates /app/* behind auth check and redirects unauthenticated users to /login"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Phase 1 — Multi-tenancy: $extends scoping + invite flow",
+      "priority": 3,
+      "passes": false,
+      "acceptanceCriteria": [
+        "src/lib/db.ts createScopedDb covers findMany/findUnique/findFirst/create/createMany/update/updateMany/upsert/delete/deleteMany for all domain models",
+        "Cross-tenant create throws 'Cross-tenant write rejected' error when data.teamId !== session.teamId",
+        "task.update in $extends emits TaskStatusEvent row when status changes",
+        "src/server/teams/invite-member.ts creates Invite row with 24hr expiry and emails the invite link",
+        "app/api/invites/accept/route.ts accepts invite token, creates User scoped to team, marks Invite.acceptedAt",
+        "app/(app)/settings/team/page.tsx shows team name, timezone picker, member list, and invite form"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Phase 2 — Projects + Tasks CRUD (AC1 + AC2)",
+      "priority": 4,
+      "passes": false,
+      "acceptanceCriteria": [
+        "app/(app)/projects/page.tsx lists all team projects",
+        "app/(app)/projects/new/page.tsx creates a project (name, description, deadline) scoped to team",
+        "app/(app)/projects/[projectId]/page.tsx shows project detail with inline task table",
+        "Task create/edit dialogs support title, description, assignee (team member dropdown), dueDate, status, and blockedReason (visible when status=BLOCKED)",
+        "Task status changes emit TaskStatusEvent via $extends layer (completedAt set when status→DONE)",
+        "Empty state on project list coaches: 'Create your first project to get a weekly update next Monday'",
+        "pnpm build exits 0 with the CRUD pages added"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Phase 3 — Report Engine: collectTaskFacts + generators (AC3 + AC5)",
+      "priority": 5,
+      "passes": false,
+      "acceptanceCriteria": [
+        "src/server/reports/collect-task-facts.ts exports collectTaskFacts(teamId, start, end) returning TaskFacts with completed/inProgress/blocked/overdue/slippedThisWeek/upcoming/byProject/byAssignee/statusTransitions",
+        "src/server/reports/weekly-generator.ts exports generateWeeklyUpdate(facts) returning WeeklyUpdateContent with highlights, completed, inProgress, blocked, upcoming, narrative — identical structured sections for identical inputs",
+        "src/server/reports/stakeholder-generator.ts exports generateStakeholderReport(facts, scope) with ExecutiveSummary, ProgressSinceLast, KeyDeliverables, Risks (includes blockedReason), NextMilestones sections",
+        "src/server/reports/narrative-polish.ts exports polishNarrative(raw, facts, teamId) that calls Anthropic claude-haiku-4-5, tracks LlmUsage, falls back to raw on error/budget-exhausted/timeout",
+        "app/api/cron/weekly-updates/route.ts uses Promise.allSettled over teams, idempotent upsert on (teamId, periodStart), returns HTTP 200 even on partial failures",
+        "app/api/reports/stakeholder/generate/route.ts creates StakeholderReport with 30-day shareTokenExpiresAt and handles P2002 concurrent-generation race",
+        "app/(app)/reports/weekly/page.tsx lists weekly updates with narrative + 'AI-assisted' footer when usedLlm=true",
+        "app/(app)/reports/stakeholder/page.tsx has Generate button and lists past reports with Copy Share Link",
+        "app/share/[token]/page.tsx renders report publicly, checks expiry/revocation, returns X-Robots-Tag: noindex nofollow"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Phase 4 — Export formats + Sentry + polish (AC4 + AC6)",
+      "priority": 6,
+      "passes": false,
+      "acceptanceCriteria": [
+        "app/api/reports/stakeholder/[id]/export/route.ts supports ?format=md returning markdown download",
+        "app/api/reports/stakeholder/[id]/export/route.ts supports ?format=pdf returning PDF via @react-pdf/renderer",
+        "Landing page at app/(marketing)/page.tsx has clear value proposition copy",
+        "All primary flows have empty-state coaching text (no blank pages)",
+        "pnpm build exits 0 with all phases complete",
+        "Sentry is initialized via @sentry/nextjs (sentry.client.config.ts and sentry.server.config.ts exist)"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Tests: unit tests for core report engine invariants",
+      "priority": 7,
+      "passes": false,
+      "acceptanceCriteria": [
+        "tests/unit/time/period-boundaries.test.ts exists and passes: weeklyPeriod in America/Los_Angeles produces correct UTC instants around DST spring-forward",
+        "tests/unit/reports/weekly-generator.test.ts exists and passes: empty week, happy week, blocked week fixture cases produce non-empty structured output",
+        "tests/unit/reports/collect-task-facts.test.ts exists and passes: boundary case (task completed exactly at periodEnd) is classified as completed",
+        "tests/unit/tenant/scoping.test.ts exists and passes: createScopedDb rejects cross-tenant writes",
+        "pnpm test exits 0 with all unit tests passing"
+      ]
+    }
+  ]
+}
