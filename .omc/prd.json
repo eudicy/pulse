@@ -27,7 +27,7 @@
       "id": "US-001",
       "title": "Phase 1 — Auth: NextAuth v5 JWT sessions with signup + login",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "src/lib/auth.ts exists with session: { strategy: 'jwt' } and PrismaAdapter for User/Account/VerificationToken only (no Session model)",
         "src/lib/auth.ts jwt callback stamps token.teamId and token.role from user record",
@@ -43,7 +43,7 @@
       "id": "US-002",
       "title": "Phase 1 — Multi-tenancy: $extends scoping + invite flow",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "src/lib/db.ts createScopedDb covers findMany/findUnique/findFirst/create/createMany/update/updateMany/upsert/delete/deleteMany for all domain models",
         "Cross-tenant create throws 'Cross-tenant write rejected' error when data.teamId !== session.teamId",
@@ -57,7 +57,7 @@
       "id": "US-003",
       "title": "Phase 2 — Projects + Tasks CRUD (AC1 + AC2)",
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "app/(app)/projects/page.tsx lists all team projects",
         "app/(app)/projects/new/page.tsx creates a project (name, description, deadline) scoped to team",
@@ -72,7 +72,7 @@
       "id": "US-004",
       "title": "Phase 3 — Report Engine: collectTaskFacts + generators (AC3 + AC5)",
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "src/server/reports/collect-task-facts.ts exports collectTaskFacts(teamId, start, end) returning TaskFacts with completed/inProgress/blocked/overdue/slippedThisWeek/upcoming/byProject/byAssignee/statusTransitions",
         "src/server/reports/weekly-generator.ts exports generateWeeklyUpdate(facts) returning WeeklyUpdateContent with highlights, completed, inProgress, blocked, upcoming, narrative — identical structured sections for identical inputs",
@@ -89,7 +89,7 @@
       "id": "US-005",
       "title": "Phase 4 — Export formats + Sentry + polish (AC4 + AC6)",
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "app/api/reports/stakeholder/[id]/export/route.ts supports ?format=md returning markdown download",
         "app/api/reports/stakeholder/[id]/export/route.ts supports ?format=pdf returning PDF via @react-pdf/renderer",
@@ -103,7 +103,7 @@
       "id": "US-006",
       "title": "Tests: unit tests for core report engine invariants",
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "tests/unit/time/period-boundaries.test.ts exists and passes: weeklyPeriod in America/Los_Angeles produces correct UTC instants around DST spring-forward",
         "tests/unit/reports/weekly-generator.test.ts exists and passes: empty week, happy week, blocked week fixture cases produce non-empty structured output",
