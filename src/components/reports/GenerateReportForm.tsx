@@ -48,8 +48,8 @@ export function GenerateReportForm({ projects }: GenerateReportFormProps) {
         return
       }
 
-      const data = (await res.json()) as { id: string }
-      router.push(`/app/reports/stakeholder/${data.id}`)
+      const data = (await res.json()) as { reportId: string }
+      router.push(`/app/reports/stakeholder/${data.reportId}`)
     } catch {
       setError('An unexpected error occurred')
     } finally {
