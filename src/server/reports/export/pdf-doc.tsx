@@ -165,12 +165,12 @@ export function buildStakeholderReportPdfElement(
                 <View
                   style={[
                     styles.progressBarFill,
-                    { width: `${p.pct}%` as unknown as number },
+                    { width: `${p.percentComplete}%` as unknown as number },
                   ]}
                 />
               </View>
               <Text style={styles.progressPct}>
-                {p.done}/{p.total} ({p.pct}%)
+                {p.done}/{p.total} ({p.percentComplete}%)
               </Text>
             </View>
           ))

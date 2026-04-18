@@ -83,7 +83,7 @@ export default async function StakeholderReportDetailPage({ params }: PageProps)
             <span className="text-xs text-muted-foreground">No active share link</span>
           )}
           <a
-            href={`/api/reports/stakeholder/${reportId}/export?format=markdown`}
+            href={`/api/reports/stakeholder/${reportId}/export?format=md`}
             className="inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             Export Markdown

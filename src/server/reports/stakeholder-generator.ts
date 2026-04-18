@@ -10,7 +10,7 @@ export type StakeholderReportContent = {
     projectName: string
     done: number
     total: number
-    pct: number
+    percentComplete: number
   }[]
   keyDeliverables: SectionItem[]
   risks: Array<
@@ -92,8 +92,8 @@ export function generateStakeholderReport(
   const progressSinceLast = progressProjects.map(({ project, tasks }) => {
     const total = tasks.length
     const done = tasks.filter((t) => t.status === 'DONE').length
-    const pct = total === 0 ? 0 : Math.round((done / total) * 100)
-    return { projectName: project.name, done, total, pct }
+    const percentComplete = total === 0 ? 0 : Math.round((done / total) * 100)
+    return { projectName: project.name, done, total, percentComplete }
   })
 
   const keyDeliverables = completed.map((t) =>

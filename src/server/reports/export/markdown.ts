@@ -32,7 +32,7 @@ export function toMarkdown(content: StakeholderReportContent): string {
     lines.push('No project data available.')
   } else {
     for (const p of content.progressSinceLast) {
-      lines.push(`- ${p.projectName}: ${p.done}/${p.total} (${p.pct}%)`)
+      lines.push(`- ${p.projectName}: ${p.done}/${p.total} (${p.percentComplete}%)`)
     }
   }
   lines.push('')
