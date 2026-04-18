@@ -1,16 +1,12 @@
-import { auth } from './src/lib/auth'
+import { getToken } from 'next-auth/jwt'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import type { Session } from 'next-auth'
 import {
   authLimiter,
   inviteLimiter,
   signupLimiter,
   checkRateLimit,
 } from './src/lib/rate-limit'
-
-// NextAuth v5 attaches the session to the request as req.auth
-type NextAuthRequest = NextRequest & { auth: Session | null }
 
 const PUBLIC_PATHS = [
   '/login',
@@ -34,7 +30,7 @@ function getIp(req: NextRequest): string {
   )
 }
 
-export default auth(async function middleware(req: NextAuthRequest) {
+export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
   const ip = getIp(req)
 
@@ -68,16 +64,20 @@ export default auth(async function middleware(req: NextAuthRequest) {
   // Allow public paths unconditionally
   if (isPublic(pathname)) return NextResponse.next()
 
-  // req.auth is populated by the NextAuth v5 auth() wrapper
-  const session = req.auth
-  if (!session?.user || !(session.user as { teamId?: string }).teamId) {
+  // Edge-safe JWT check — no Prisma involved
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+
+  if (!token?.teamId) {
     const loginUrl = new URL('/login', req.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
