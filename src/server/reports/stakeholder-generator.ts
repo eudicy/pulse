@@ -14,7 +14,7 @@ export type StakeholderReportContent = {
   }[]
   keyDeliverables: SectionItem[]
   risks: Array<
-    SectionItem & { riskType: 'blocked' | 'overdue' | 'slipped' }
+    SectionItem & { riskType: 'blocked' | 'overdue' | 'slipped'; severity: 'low' | 'medium' | 'high' }
   >
   nextMilestones: SectionItem[]
   narrative: string
@@ -128,9 +128,16 @@ export function generateStakeholderReport(
     }
   }
 
+  const RISK_SEVERITY: Record<string, 'low' | 'medium' | 'high'> = {
+    blocked: 'high',
+    overdue: 'high',
+    slipped: 'medium',
+  }
+
   const risks = riskTasks.map(({ task, riskType }) => ({
     ...toSectionItem(task, byProject, byAssignee),
     riskType,
+    severity: RISK_SEVERITY[riskType] ?? 'low',
   }))
 
   const nextMilestones = upcoming.map((t) =>
