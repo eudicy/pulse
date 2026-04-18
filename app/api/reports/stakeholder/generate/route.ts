@@ -46,22 +46,22 @@ export async function POST(req: Request) {
     }
   }
 
-  const facts = await collectTaskFacts(session.teamId, periodStart, periodEnd)
-  const scope: { type: 'team' | 'project'; projectId?: string } = projectId
-    ? { type: 'project', projectId }
-    : { type: 'team' }
-  const structured = generateStakeholderReport(facts, scope)
-  const polished = await polishNarrative(structured.narrative, session.teamId)
-  const content = {
-    ...structured,
-    narrative: polished.text,
-    usedLlm: polished.usedLlm,
-  }
-
-  const shareToken = randomBytes(32).toString('base64url')
-  const shareTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-
   try {
+    const facts = await collectTaskFacts(session.teamId, periodStart, periodEnd)
+    const scope: { type: 'team' | 'project'; projectId?: string } = projectId
+      ? { type: 'project', projectId }
+      : { type: 'team' }
+    const structured = generateStakeholderReport(facts, scope)
+    const polished = await polishNarrative(structured.narrative, session.teamId)
+    const content = {
+      ...structured,
+      narrative: polished.text,
+      usedLlm: polished.usedLlm,
+    }
+
+    const shareToken = randomBytes(32).toString('base64url')
+    const shareTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
     const report = await dbRaw.stakeholderReport.create({
       data: {
         teamId: session.teamId,
@@ -80,7 +80,8 @@ export async function POST(req: Request) {
     return Response.json({ reportId: report.id, shareToken })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
-    if (message.includes('P2002')) {
+    const code = (err as { code?: string }).code
+    if (code === 'P2002' || message.includes('P2002')) {
       const existing = await dbRaw.stakeholderReport.findFirst({
         where: {
           teamId: session.teamId,
@@ -95,6 +96,6 @@ export async function POST(req: Request) {
         })
       }
     }
-    throw err
+    return Response.json({ error: message }, { status: 500 })
   }
 }

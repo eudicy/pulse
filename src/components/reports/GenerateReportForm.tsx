@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 
 interface Project {
   id: string
@@ -25,6 +25,8 @@ export function GenerateReportForm({ projects }: GenerateReportFormProps) {
   const [error, setError] = useState<string | null>(null)
 
   const isProject = scopeValue !== 'TEAM'
+  const selectedLabel =
+    scopeValue === 'TEAM' ? 'Team' : (projects.find((p) => p.id === scopeValue)?.name ?? scopeValue)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,8 +45,14 @@ export function GenerateReportForm({ projects }: GenerateReportFormProps) {
       })
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setError((data as { error?: string }).error ?? 'Failed to generate report')
+        const text = await res.text()
+        let errorMsg = 'Failed to generate report'
+        try {
+          errorMsg = (JSON.parse(text) as { error?: string }).error ?? errorMsg
+        } catch {
+          errorMsg = text || errorMsg
+        }
+        setError(errorMsg)
         return
       }
 
@@ -64,7 +72,7 @@ export function GenerateReportForm({ projects }: GenerateReportFormProps) {
           <label className="text-sm font-medium text-foreground">Scope</label>
           <Select value={scopeValue} onValueChange={(v) => setScopeValue(v ?? 'TEAM')}>
             <SelectTrigger>
-              <SelectValue placeholder="Select scope" />
+              <span className="flex-1 text-left">{selectedLabel}</span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="TEAM">Team</SelectItem>
